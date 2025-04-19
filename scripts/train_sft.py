@@ -132,7 +132,12 @@ def main():
 
     # Train and then evaluate on validation set
     trainer.train()
-    metrics = trainer.evaluate(eval_dataset=eval_dataset)
+    # Evaluate only if validation dataset is provided
+    if eval_dataset is not None:
+        metrics = trainer.evaluate(eval_dataset=eval_dataset)
+    else:
+        print("No eval_dataset provided; skipping evaluation.")
+        metrics = {}
 
     # Save model and metrics
     os.makedirs(args.output, exist_ok=True)
