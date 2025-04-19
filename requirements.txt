@@ -1,0 +1,38 @@
+# Core & ML
+torch>=2.0
+gymnasium>=1.1.1
+numpy>=1.23
+pandas>=2.0
+
+# RL & curiosité
+stable-baselines3>=1.8
+tensorboard
+tqdm
+
+# NLP & répétition espacée
+transformers>=4.30
+datasets>=2.0
+
+# Web & visualisation
+selenium>=4.1
+webdriver-manager
+matplotlib>=3.6
+seaborn>=0.12
+
+# API temps réel
+fastapi>=0.95
+uvicorn>=0.22
+websockets>=11.0
+pydantic>=2.1
+
+# Continual learning
+accelerate>=0.18
+avalanche-lib>=0.9.0
+
+# Dev & QA
+black
+flake8
+markdownlint
+
+# Config parsing
+pyyaml>=6.0

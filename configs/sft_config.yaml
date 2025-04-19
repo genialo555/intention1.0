@@ -1,0 +1,7 @@
+# AI-Assisted (2025-04-17): Default configuration for Supervised Fine-Tuning (SFT)
+model_name: gpt2
+batch_size: 8
+epochs: 1
+learning_rate: 5e-5
+max_length: 512
+logging_steps: 10 
