@@ -101,18 +101,17 @@ def main():
     # Prepare data collator for dynamic padding
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-    # Training arguments (must be defined before Trainer)
+    # Training arguments (remove evaluation_* settings for compatibility)
     training_args = TrainingArguments(
         output_dir=args.output,
         num_train_epochs=epochs,
-        evaluation_strategy=evaluation_strategy,
-        eval_steps=eval_steps or logging_steps,
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
         learning_rate=lr,
         logging_steps=logging_steps,
-        logging_dir=os.path.join(args.output, 'logs'),
-        report_to=config.get('report_to', 'tensorboard'),
+        eval_strategy=evaluation_strategy,
+        eval_steps=eval_steps or logging_steps,
+        save_strategy="steps",
         save_steps=save_steps or logging_steps,
         warmup_steps=warmup_steps,
         weight_decay=weight_decay,
@@ -120,20 +119,20 @@ def main():
         no_cuda=no_cuda,
         gradient_checkpointing=gradient_checkpointing,
         seed=seed or 42,
+        report_to=None,
     )
 
-    # Initialize Trainer with all arguments
+    # Initialize Trainer with compatible arguments
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
         data_collator=data_collator,
     )
 
-    # Train and evaluate
+    # Train and then evaluate on validation set
     trainer.train()
-    metrics = trainer.evaluate()
+    metrics = trainer.evaluate(eval_dataset=eval_dataset)
 
     # Save model and metrics
     os.makedirs(args.output, exist_ok=True)
