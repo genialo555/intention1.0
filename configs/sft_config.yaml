@@ -1,7 +1,19 @@
-# AI-Assisted (2025-04-17): Default configuration for Supervised Fine-Tuning (SFT)
-model_name: gpt2
-batch_size: 8
-epochs: 1
-learning_rate: 5e-5
+# AI-Assisted (2025-04-17): SFT Config optimisée pour RTX4050
+# Hardware: 32GB RAM, Intel i5 13ème gen, GPU RTX4050
+data_pattern: data/sft_examples/*.jsonl
+field: text
+model_name: gpt2-medium        # 345M parameters
+batch_size: 4                  # actual batch size
+gradient_accumulation_steps: 4 # equivalent to batch_size 16
+epochs: 3                      # multiple passes to converge
+learning_rate: 3e-5            # lower LR for GPT2-medium
 max_length: 512
-logging_steps: 10 
+logging_steps: 20
+evaluation_strategy: steps
+eval_steps: 100
+save_steps: 200
+warmup_steps: 200
+weight_decay: 0.01
+seed: 42
+fp16: true                     # half-precision on GPU
+gradient_checkpointing: true   # reduce activation memory 
