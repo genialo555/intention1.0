@@ -1,0 +1,17 @@
+# AI-Assisted (2025-04-17): Minimal test config for quick SFT pipeline verification
+# Uses small model and 1 epoch
+data_pattern: data/sft_examples/example.jsonl
+field: text
+model_name: gpt2
+batch_size: 2
+gradient_accumulation_steps: 1
+epochs: 1
+learning_rate: 5e-5
+max_length: 32
+logging_steps: 1
+save_steps: 1
+warmup_steps: 0
+weight_decay: 0.0
+seed: 42
+fp16: false
+gradient_checkpointing: false 

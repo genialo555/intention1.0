@@ -11,9 +11,11 @@ import argparse
 import json
 import yaml
 import glob
+import random
+import numpy as np
 import torch
 from datasets import Dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments
+from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments, DataCollatorForLanguageModeling
 from orchestration.controller import Blackboard
 
 
@@ -48,6 +50,12 @@ def main():
     fp16 = bool(config.get('fp16', False))
     gradient_checkpointing = bool(config.get('gradient_checkpointing', False))
 
+    # Set seeds for reproducibility
+    if seed is not None:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed)
+        np.random.seed(seed)
+        random.seed(seed)
     # Detect CUDA availability
     use_cuda = torch.cuda.is_available()
     if not use_cuda:
@@ -66,30 +74,45 @@ def main():
 
     # Initialize tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained(model_name)
+    # GPT2 models do not have a pad token by default; set it to eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(model_name)
+    model.config.pad_token_id = tokenizer.pad_token_id
 
     # Tokenization function
     def tokenize_fn(examples):
-        return tokenizer(examples['text'], truncation=True, max_length=max_length)
+        # Tokenize and pad to max_length for uniform batch sizes
+        return tokenizer(examples['text'], truncation=True, max_length=max_length, padding='max_length')
 
     tokenized = dataset.map(tokenize_fn, batched=True, remove_columns=['text'])
-    # Split dataset for evaluation if enabled
+    # For causal LM, set labels = input_ids for loss calculation
+    tokenized = tokenized.map(lambda examples: {'labels': examples['input_ids']}, batched=True)
+    # Split dataset for evaluation based on config
+    test_size = float(config.get('test_size', 0.1))
     if evaluation_strategy != 'no':
-        split = tokenized.train_test_split(test_size=0.1, seed=seed or 42)
+        split = tokenized.train_test_split(test_size=test_size, seed=seed or 42)
         train_dataset = split['train']
         eval_dataset = split['test']
     else:
         train_dataset = tokenized
         eval_dataset = None
 
-    # Training arguments
+    # Prepare data collator for dynamic padding
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+
+    # Training arguments (must be defined before Trainer)
     training_args = TrainingArguments(
         output_dir=args.output,
         num_train_epochs=epochs,
+        evaluation_strategy=evaluation_strategy,
+        eval_steps=eval_steps or logging_steps,
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
         learning_rate=lr,
         logging_steps=logging_steps,
+        logging_dir=os.path.join(args.output, 'logs'),
+        report_to=config.get('report_to', 'tensorboard'),
         save_steps=save_steps or logging_steps,
         warmup_steps=warmup_steps,
         weight_decay=weight_decay,
@@ -97,13 +120,15 @@ def main():
         no_cuda=no_cuda,
         gradient_checkpointing=gradient_checkpointing,
         seed=seed or 42,
-        report_to=None,
     )
 
+    # Initialize Trainer with all arguments
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        data_collator=data_collator,
     )
 
     # Train and evaluate
