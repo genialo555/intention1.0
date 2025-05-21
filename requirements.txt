@@ -1,38 +1,55 @@
 # Core & ML
-torch>=2.0
-gymnasium>=1.1.1
-numpy>=1.23
-pandas>=2.0
+torch==2.2.1
+gymnasium[procgen]==0.29.1
+numpy==1.24.3
+pandas==2.0.3
 
 # RL & curiosité
-stable-baselines3>=1.8
-tensorboard
-tqdm
+stable-baselines3==2.2.1
+tensorboard==2.15.1
+tqdm>=4.66.3,<5
 
 # NLP & répétition espacée
-transformers>=4.30
-datasets>=2.0
+transformers>=4.46.0
+datasets>=3.0.0
 
 # Web & visualisation
-selenium>=4.1
-webdriver-manager
-matplotlib>=3.6
-seaborn>=0.12
+selenium==4.16.0
+webdriver-manager==4.0.1
+matplotlib==3.8.2
+seaborn==0.13.1
 
 # API temps réel
-fastapi>=0.95
-uvicorn>=0.22
-websockets>=11.0
-pydantic>=2.1
+fastapi==0.109.2
+uvicorn==0.27.1
+websockets==12.0
+pydantic==2.6.1
 
 # Continual learning
-accelerate>=0.18
-avalanche-lib>=0.9.0
+accelerate>=0.34.0
 
 # Dev & QA
-black
-flake8
-markdownlint
+black==24.1.1
+flake8==7.0.0
+scikit-learn==1.4.0
+pytest==8.0.0
 
 # Config parsing
-pyyaml>=6.0
+pyyaml==6.0.1
+
+# Extras for Gymnasium environments
+requests>=2.32.2,<3
+optuna==3.5.0
+hydra-core==1.3.2
+# RLHF methods (GRPOTrainer, etc.)
+trl==0.17.0
+bitsandbytes==0.41.3
+deepspeed>=0.9.3
+# Add other specific versions if needed
+
+# Add setuptools and wheel for building packages from sdist
+setuptools>=65.0.0
+wheel>=0.38.4
+
+# MPI for Python binding for distributed training
+mpi4py==4.0.3

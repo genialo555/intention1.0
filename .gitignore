@@ -1,0 +1,29 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+data/
+*.sqlite3
+.DS_Store
+
+# Project-specific ignores
+.blackboard.json
+temp_*.yaml
+
+# Logs and outputs
+*.log
+nohup.out
+logs/
+outputs/
+results/
+
+# Python caches
+.pytest_cache/
+__pycache__/
+
+# Model weights and HF artifacts
+**/pytorch_model*.bin
+**/*.safetensors
+
+# Local model clones (downloaded via HF API)
+models/
