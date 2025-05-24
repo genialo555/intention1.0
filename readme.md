@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/)  
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)  
-[![Build Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/ton-org/curiosity-driven-ai/actions)  
+[![Build Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/genialo555/intention1.0/actions)  
 
 > **⚠️ IMPORTANT** : L'ordre d'entraînement des modules est **critique** pour le fonctionnement du système. LIMEN doit être entraîné immédiatement après SFT car il supervise tous les autres modules. Voir [Logique et Dépendances du Pipeline](#logique-et-dépendances-du-pipeline) pour plus de détails.
 
@@ -16,7 +16,7 @@
 4. [Objectifs du Projet](#objectifs-du-projet)  
 5. [Architecture Globale](#architecture-globale)  
 6. [Principaux Modules](#principaux-modules)  
-7. [Module LIMEN : Architecture de l'Intention Émergente](#module-limen--architecture-de-lintention-émergente)  
+7. [Module LIMEN : Architecture de l'Intention Émergente](#module-limen--architecture-de-lintention--émergente)  
 8. [Fonctionnement du Méta‑Contrôleur](#fonctionnement-du-méta‑contrôleur)  
 9. [Technologies & Dépendances](#technologies--dépendances)  
 10. [Installation](#installation)  
@@ -91,7 +91,7 @@ Les IA classiques apprennent à optimiser un objectif externe : classification,
 - Explore et apprend de façon **naturelle** et **continue**  
 - **Transfère** ses acquis entre disciplines  
 
-Nous nous appuyons sur les avancées : AlphaGo Zero (MCTS), Transformers, reinforcement learning intrinsèque (ICM, RND), modèles de diffusion (diffu‑GRPO), continual learning, mythèmes (XNets) et apprentissage multimodal.
+Nous nous appuyons sur les avancées : AlphaGo Zero (MCTS), Transformers, reinforcement learning intrinsèque (ICM, RND), modèles de diffusion (diffu-GRPO), continual learning, mythèmes (XNets) et apprentissage multimodal.
 
 ---
 
@@ -204,7 +204,7 @@ Notre système intègre l'architecture révolutionnaire [Group Think](https://ar
    - Adaptateurs (LoRA), replay buffer, EWC, Transformer‑XL online pour apprentissage en flux continu.  
 7. **XNets & Mythèmes**  
    - Détection d'isomorphismes conceptuels entre disciplines via blocs linéaires + Softplus.  
-8. **diffu‑GRPO**  
+8. **diffu-GRPO**  
    - RL pour modèles de diffusion masquée (one‑step policy gradient + prompt masking).  
 9. **Ingestion Web**  
    - Selenium + webdriver‑manager pour récupérer des informations en ligne.  
@@ -336,7 +336,7 @@ Il consigne chaque « état → intention → décision LIMEN → action → ré
 
 - **Langage :** Python 3.10+  
 - **Modélisation & RL :** PyTorch, Stable‑Baselines3, Transformers  
-- **Diffusion RL :** implémentation custom diffu‑GRPO  
+- **Diffusion RL :** implémentation custom diffu-GRPO  
 - **Planification :** MCTS, custom MCTransformer  
 - **Continual Learning :** Avalanche (ou accelerate), LoRA, EWC  
 - **Web Scraping :** Selenium, webdriver‑manager  
@@ -351,8 +351,8 @@ Il consigne chaque « état → intention → décision LIMEN → action → ré
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/ton‑org/curiosity‑driven‑ai.git
-cd curiosity‑driven‑ai
+git clone https://github.com/genialo555/intention1.0.git
+cd intention1.0
 
 # Environnement virtuel
 python3.10 -m venv .venv
@@ -361,16 +361,16 @@ source .venv/bin/activate
 # Installer les dépendances
 pip install -r requirements.txt
 
-### Configuration
+## Configuration
 
 Adapt the following configuration files before each training run:
 
 * **configs/sft_config.yaml** (Supervised Fine-Tuning):
   ```yaml
-  # Example optimized config for RTX4050
+  # Example optimized config for RTX 3090
   data_pattern: data/sft_examples/*.jsonl
   field: text
-  model_name: deepseekr1-qwen-12b    # DeepSeek R1 Qwen 12B
+  model_name: "deepseek-r1-qwen-12b"    # DeepSeek R1 Qwen 12B
   batch_size: 4                  # actual batch size
   gradient_accumulation_steps: 4 # equivalent to batch_size 16
   epochs: 3                      # multiple passes to converge
@@ -388,9 +388,9 @@ Adapt the following configuration files before each training run:
   ```
 
 * **configs/network.yaml**: thresholds for trust/complexity, hyperparameters for Transformer², XNets.
-* **configs/grpo_config.yaml**: masking rate, reward weights for diffu‑GRPO
+* **configs/grpo_config.yaml**: masking rate, reward weights for diffu-GRPO
   ```yaml
-  # Default diffu‑GRPO config
+  # Default diffu-GRPO config
   model_path: models/sft_finetuned/latest.pt  # Path to pretrained SFT checkpoint
   mask_rate: 0.15           # Proportion of tokens to mask per step
   reward_weight: 1.0        # Weight for reward computation
@@ -425,7 +425,7 @@ Adapt the following configuration files before each training run:
 * **configs/transformer2_config.yaml** (Transformer² placeholder config):
   ```yaml
   # Transformer² placeholder config
-  model_name: deepseekr1-qwen-12b    # DeepSeek R1 Qwen 12B
+  model_name: "deepseek-r1-qwen-12b"    # DeepSeek R1 Qwen 12B
   seq_len: 16                 # Sequence length for input
   batch_size: 2               # Batch size for placeholder training
   timesteps: 10               # Number of training steps on random token data
@@ -520,12 +520,15 @@ Cette configuration optimisée pour RTX 3090 garantit une utilisation efficace d
 
 8. Rapport Hebdomadaire
 
+```bash
 python scripts/report_weekly.py
 # génère un rapport Markdown/HTML dans visualization/reports/
+```
 
-Structure du Projet
+## Structure du Projet
 
-curiosity_ai_project/
+```
+intention1.0/
 │
 ├── data/                    # jeux de données segmentés par phase
 ├── models/
@@ -561,35 +564,29 @@ curiosity_ai_project/
 ├── README.md
 ├── ROADMAP.md
 └── requirements.txt
+```
 
-Tests & Qualité
+## Tests & Qualité
 
-    Unitaires : pytest tests/unit/
+- **Unitaires** : pytest tests/unit/
+- **Intégration** : pytest tests/integration/
+- **Lint** : black --check ., flake8 ., markdownlint docs/
+- **CI** : GitHub Actions exécute l'ensemble à chaque PR.
 
-    Intégration : pytest tests/integration/
+## Contribution
 
-    Lint : black --check ., flake8 ., markdownlint docs/
-
-    CI : GitHub Actions exécute l'ensemble à chaque PR.
-
-Contribution
-
-    Forker le dépôt & créer une branche thématique.
-
-    Respecter les Cursor Rules (structure, docstrings, mise à jour README/ROADMAP).
-
-    Ajouter tests unitaires pour tout nouveau code.
-
-    Soumettre un Pull Request détaillant vos changements.
+1. Forker le dépôt & créer une branche thématique.
+2. Respecter les Cursor Rules (structure, docstrings, mise à jour README/ROADMAP).
+3. Ajouter tests unitaires pour tout nouveau code.
+4. Soumettre un Pull Request détaillant vos changements.
 
 Voir CONTRIBUTING.md pour plus de détails.
-Roadmap & Documentation
 
-    La Roadmap détaillée se trouve dans ROADMAP.md.
+## Roadmap & Documentation
 
-    Consultez docs/network_design.md pour les schémas d'architecture et docs/api_examples.md pour les exemples d'appels.
-
-    Les règles d'édition sont dans .cursor/rules/.
+- La Roadmap détaillée se trouve dans ROADMAP.md.
+- Consultez docs/network_design.md pour les schémas d'architecture et docs/api_examples.md pour les exemples d'appels.
+- Les règles d'édition sont dans .cursor/rules/.
 
 ## Usage & Exemples
 
