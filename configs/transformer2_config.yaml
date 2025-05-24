@@ -1,0 +1,58 @@
+# Transformer² (CascadeTransformer) Configuration
+# Architecture en cascade pour le raisonnement avancé
+
+# === Modèle de base ===
+model_name: deepseekr1-qwen-12b    # DeepSeek R1 Qwen 12B comme base
+seq_len: 16                        # Sequence length for input
+batch_size: 8                      # Batch size optimisé pour RTX 3090
+max_length: 512                    # Longueur maximale des séquences
+
+# === Architecture Cascade ===
+cascade:
+  coarse_model:                    # Premier passage (modèle figé)
+    frozen: true                   # Le modèle coarse reste figé
+    checkpoint: "models/sft_finetuned/latest.pt"
+  
+  refiner_model:                   # Second passage (modèle affiné)
+    trainable: true                # Le raffineur est entraînable
+    hidden_dim: 768                # Dimension complète avec RTX 3090
+    num_layers: 8                  # Plus de couches possibles avec 24GB
+    beam_size: 5                   # Beam search plus large
+
+# === Entraînement ===
+training:
+  timesteps: 10                    # Number of training steps on data
+  learning_rate: 5e-5              # Learning rate for refiner optimizer
+  weight_decay: 0.01               # Régularisation L2
+  gradient_clip: 1.0               # Clipping du gradient
+  gradient_checkpointing: false    # Désactivé avec 24GB VRAM
+  
+  # Optimisation
+  optimizer: "adamw"               # Optimiseur
+  warmup_steps: 100                # Étapes de warmup
+  
+# === Logging et sauvegarde ===
+logging_steps: 1                   # Log interval
+save_steps: 5                      # Checkpoint save interval
+evaluation_steps: 10               # Évaluation tous les N steps
+
+# === PEFT (Parameter Efficient Fine-Tuning) ===
+peft_enable: false                 # Full fine-tuning possible avec RTX 3090
+peft_r: 8                          # LoRA rank (si activé)
+peft_alpha: 32                     # LoRA scaling factor (si activé)
+peft_dropout: 0.05                 # LoRA dropout rate (si activé)
+
+# === Intégration LIMEN ===
+limen_integration:
+  enabled: true                    # Intégration avec LIMEN
+  tension_monitoring: true         # Surveillance des tensions
+  intention_validation: true       # Validation des intentions
+
+# === Métriques ===
+metrics:
+  track_refinement_quality: true   # Qualité du raffinement
+  compare_coarse_refined: true     # Comparaison coarse vs refined
+  perplexity_improvement: true     # Amélioration de perplexité
+
+# Seed pour reproductibilité
+seed: 42 

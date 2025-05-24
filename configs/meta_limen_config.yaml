@@ -1,0 +1,154 @@
+# Configuration MetaLIMEN (Meta-Latent Intent Meta-Emergent Nexus)
+# Point de départ intentionnel pour résolution paradoxe bootstrap
+
+# === Architecture simple ===
+embedding_dim: 64                # Dimension embeddings simples (Word2Vec)
+meta_space_dim: 64              # Dimension espace méta-intentionnel
+simple_embedder: "word2vec"     # Type embeddings simples (word2vec, glove)
+pretrained_embeddings: "glove.6B.100d"  # Embeddings pré-entraînés
+
+# === Domaines d'intentions cibles ===
+target_domains:
+  physics:
+    description: "mathematical physics concepts reasoning equations formulas"
+    priority: 0.8
+    curriculum_weight: 0.3
+    keywords: ["physics", "mathematics", "equation", "formula", "mechanics", "quantum"]
+    complexity_level: "intermediate"
+    reasoning_type: "quantitative"
+  
+  biology:
+    description: "biological systems understanding organism cell evolution"
+    priority: 0.7
+    curriculum_weight: 0.2
+    keywords: ["biology", "organism", "cell", "evolution", "genetics", "ecology"]
+    complexity_level: "intermediate"
+    reasoning_type: "systemic"
+    
+  economics:
+    description: "economic modeling decision making market behavior"
+    priority: 0.6
+    curriculum_weight: 0.2
+    keywords: ["economics", "market", "decision", "behavior", "modeling", "finance"]
+    complexity_level: "advanced"
+    reasoning_type: "analytical"
+    
+  psychology:
+    description: "cognitive processes human behavior mental mechanisms"
+    priority: 0.5
+    curriculum_weight: 0.3
+    keywords: ["psychology", "cognitive", "behavior", "mental", "learning", "memory"]
+    complexity_level: "intermediate"
+    reasoning_type: "behavioral"
+
+# === Espace méta-intentionnel ===
+meta_intention_space:
+  initialization: "random_normal"
+  similarity_threshold: 0.3      # Seuil similarité entre domaines
+  separation_penalty: 0.1        # Pénalité rapprochement domaines différents
+  coherence_reward: 0.2          # Récompense cohérence interne domaine
+
+# === Curriculum génération ===
+curriculum_generation:
+  data_filtering: true           # Activer filtrage données selon intentions
+  priority_weighting: true      # Pondération selon priorités domaines
+  progression_mapping: true     # Mapping progression apprentissage
+  
+  # Stratégies filtrage
+  filtering_strategy:
+    keyword_matching: true       # Filtrage par mots-clés
+    semantic_similarity: true    # Similarité sémantique
+    complexity_grading: true     # Gradation complexité
+    
+  # Pondération curriculum
+  weighting_strategy:
+    linear_priority: false       # Pondération linéaire priorités
+    exponential_priority: true   # Pondération exponentielle
+    adaptive_weights: false      # Poids adaptatifs (trop complexe)
+
+# === Entraînement MetaLIMEN ===
+training:
+  max_epochs: 5                  # Epochs limités (système simple)
+  learning_rate: 1e-3            # LR pour embeddings simples
+  batch_size: 32                 # Batch size pour intentions
+  validation_split: 0.2          # Split validation
+  early_stopping_patience: 2     # Patience arrêt précoce
+  
+  # Optimisation intention space
+  intention_optimization:
+    separation_loss_weight: 0.3   # Poids loss séparation domaines
+    coherence_loss_weight: 0.7    # Poids loss cohérence interne
+    regularization_weight: 0.1    # Régularisation L2
+
+# === Méta-apprentissage (limité) ===
+meta_learning:
+  intention_evolution: false    # Pas d'évolution complexe
+  simple_adaptation: true       # Adaptation simple basée usage
+  feedback_integration: false   # Pas de feedback complexe
+  
+  # Adaptation simple
+  adaptation:
+    usage_tracking: true         # Suivi usage intentions
+    frequency_adjustment: true   # Ajustement fréquences
+    priority_drift: false        # Pas de dérive priorités
+
+# === Interface avec SFT ===
+sft_interface:
+  curriculum_export: true        # Export curriculum pour SFT
+  intention_export: true         # Export intentions pour SFT
+  guidance_generation: true      # Génération guidance SFT
+  
+  # Format exports
+  export_format:
+    intentions_file: "intentions.pt"
+    curriculum_file: "curriculum.json"
+    guidance_file: "sft_guidance.yaml"
+
+# === Validation et métriques ===
+validation:
+  intention_coherence: true      # Test cohérence intentions
+  domain_separation: true       # Test séparation domaines
+  curriculum_quality: true      # Test qualité curriculum
+  bootstrap_success: true       # Test résolution bootstrap
+
+# Métriques cibles
+target_metrics:
+  intention_coherence: 0.8       # Cohérence intentions > 0.8
+  domain_separation: 0.3         # Séparation domaines > 0.3
+  curriculum_coverage: 0.9       # Couverture curriculum > 90%
+  bootstrap_resolution: true     # Bootstrap résolu
+
+# === Logging et monitoring ===
+logging:
+  intention_evolution: true      # Log évolution intentions
+  curriculum_generation: true    # Log génération curriculum
+  domain_statistics: true       # Stats par domaine
+  export_tracking: true         # Suivi exports
+
+# Niveau de logs
+log_level: "INFO"
+save_frequency: 10             # Sauvegarde tous les N epochs
+
+# === Chemins et fichiers ===
+paths:
+  conceptual_data: "data/conceptual_corpus/"
+  output_dir: "models/meta_limen/"
+  embeddings_cache: "cache/embeddings/"
+  logs_dir: "logs/meta_limen/"
+
+# === Réproductibilité ===
+seed: 42                       # Seed pour reproductibilité
+deterministic: true            # Mode déterministe
+
+# === Configuration hardware ===
+hardware:
+  device: "cpu"                # CPU suffisant pour MetaLIMEN simple
+  num_workers: 4               # Workers pour chargement données
+  pin_memory: false            # Pas de pin memory (CPU)
+
+# === Debugging ===
+debug:
+  verbose_logging: false       # Logs détaillés
+  intention_visualization: true # Visualisation intentions
+  curriculum_inspection: true  # Inspection curriculum généré
+  export_validation: true     # Validation exports 

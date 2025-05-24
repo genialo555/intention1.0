@@ -1,42 +1,77 @@
-# AI-Assisted (YYYY-MM-DD): SFT Config pour DeepSeek-R1-Distill-Qwen-7B
-# Hardware: (A adapter selon votre matériel)
-data_pattern: data/processed/sft_prepared_data.jsonl # S'assurer que cela pointe vers la sortie de prepare_data.py
-field: text                       # Le champ dans votre JSONL contenant le texte à entraîner
-model_name: /home/genialo/intiasys/models/DeepSeek-R1-Distill-Qwen-7B/ # Modifié pour le chemin local
-trust_remote_code: true           # Nécessaire pour certains modèles comme DeepSeek
+# Supervised Fine-Tuning Configuration
+# Configuration optimisée pour DeepSeek R1 Qwen 12B
 
-# Ajuster en fonction de votre GPU et de la taille du modèle
-batch_size: 1                     # Les grands modèles nécessitent souvent un petit batch size
-gradient_accumulation_steps: 8    # Pour simuler un batch size plus grand (ex: 1*8=8)
-epochs: 3                         # Augmenté légèrement pour voir si le modèle apprend quelque chose sur ces quelques exemples
-learning_rate: 2e-4               # Learning rate typique pour LoRA, ajuster si besoin (plus haut que pour full SFT)
-max_length: 2048                  # Longueur de contexte du modèle Qwen, à vérifier pour cette version distillée
+# === Données ===
+data_pattern: data/sft_examples/*.jsonl
+field: text                        # Champ contenant le texte dans les fichiers JSONL
 
-# Paramètres de quantification (optionnel, pour réduire l'utilisation mémoire)
-load_in_8bit: true # Nécessaire pour que PEFT soit utile sur des modèles quantifiés
-# load_in_4bit: true
-# bnb_4bit_quant_type: "nf4"
-# bnb_4bit_compute_dtype: "torch.bfloat16"
-# bnb_4bit_use_double_quant: true
+# === Modèle ===
+model_name: deepseekr1-qwen-12b    # DeepSeek R1 Qwen 12B
+max_length: 512                    # Longueur maximale des séquences
+vocab_size: null                   # Auto-détecté depuis le modèle
+trust_remote_code: true            # Nécessaire pour DeepSeek
 
-# --- PEFT LoRA Configuration ---
-peft_enable: true
-lora_r: 16
-lora_alpha: 32
-lora_dropout: 0.05
-# lora_target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+# === Entraînement ===
+batch_size: 8                      # Batch size réel (optimisé RTX 3090)
+gradient_accumulation_steps: 2     # Équivalent à batch_size 16
+epochs: 3                          # Nombre de passes sur les données
+learning_rate: 3e-5                # Taux d'apprentissage pour DeepSeek R1 Qwen 12B
+weight_decay: 0.01                 # Régularisation L2
+warmup_steps: 200                  # Étapes de warmup
 
-logging_steps: 1 # Baissé pour voir plus de logs avec peu de données
-evaluation_strategy: "no" # Pas d'évaluation avec si peu de données pour l'instant
-eval_steps: 5 # Non pertinent si no evaluation
-save_steps: 5  # Sauvegarder après quelques steps pour ce petit test
-warmup_steps: 50                  # Adapter en fonction du nombre total de steps
-weight_decay: 0.01
-seed: 42
-fp16: false
-gradient_checkpointing: true
+# === Optimisation mémoire ===
+fp16: true                         # Half-precision sur GPU
+gradient_checkpointing: false      # Désactivé avec 24GB VRAM
+dataloader_pin_memory: true        # Pin memory pour efficacité GPU
+dataloader_num_workers: 8          # Plus de workers avec Ryzen 9 7900
+load_in_8bit: false                # Quantification 8-bit (désactivé par défaut)
 
-# Si votre dataset était sur le Hub Hugging Face (non applicable ici car local)
-# dataset_path: "nom_du_dataset_sur_le_hub"
-# dataset_config: "config_du_dataset_si_necessaire"
-# dataset_split: "train" # ou le split désiré 
+# === PEFT LoRA Configuration ===
+peft_enable: false                 # Full fine-tuning possible avec RTX 3090
+lora_r: 16                         # Rang LoRA (si activé)
+lora_alpha: 32                     # Alpha LoRA (si activé)
+lora_dropout: 0.05                 # Dropout LoRA (si activé)
+lora_target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"] # Modules cibles
+
+# === Logging et évaluation ===
+logging_steps: 20                  # Fréquence des logs
+evaluation_strategy: steps         # Évaluation par steps
+eval_steps: 100                    # Évaluation tous les 100 steps
+save_steps: 200                    # Sauvegarde tous les 200 steps
+save_total_limit: 3                # Nombre max de checkpoints
+
+# === Métriques ===
+metrics:
+  - perplexity                     # Perplexité
+  - loss                           # Perte d'entraînement
+  - bleu                           # Score BLEU (si applicable)
+
+# === Optimiseur ===
+optimizer: adamw                   # Optimiseur AdamW
+adam_beta1: 0.9                    # Beta1 pour Adam
+adam_beta2: 0.999                  # Beta2 pour Adam
+adam_epsilon: 1e-8                 # Epsilon pour Adam
+
+# === Scheduler ===
+lr_scheduler_type: cosine          # Scheduler cosine
+num_warmup_steps: 200              # Steps de warmup
+max_grad_norm: 1.0                 # Clipping du gradient
+
+# === Réproductibilité ===
+seed: 42                           # Seed pour reproductibilité
+data_seed: 42                      # Seed pour données
+
+# === Validation ===
+validation_split: 0.1             # 10% des données pour validation
+load_best_model_at_end: true       # Charger le meilleur modèle à la fin
+metric_for_best_model: eval_loss   # Métrique pour sélection du meilleur modèle
+greater_is_better: false           # Plus petit est mieux pour la loss
+
+# === Sorties ===
+output_dir: models/sft_finetuned/  # Répertoire de sortie
+overwrite_output_dir: true         # Écraser le répertoire existant
+report_to: ["tensorboard"]         # Reporting (tensorboard, wandb, etc.)
+
+# === GPU-spécifique RTX 3090 ===
+per_device_train_batch_size: 8     # Batch size par device (optimisé 24GB)
+per_device_eval_batch_size: 12     # Batch size éval par device (plus large) 

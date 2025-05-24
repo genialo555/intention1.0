@@ -1,0 +1,96 @@
+# Configuration LIMEN (Latent Intent Meta-Emergent Nexus)
+# Superviseur d'intentions émergentes pour Curiosity-Driven AI
+
+# === Architecture du tenseur latent ===
+latent_dim: 128              # Dimension du tenseur d'intention latente
+hidden_dim: 512              # Dimension augmentée avec RTX 3090
+num_heads: 12                # Plus de têtes avec 24GB VRAM
+num_layers: 6                # Plus de couches possibles
+
+# === Seuils de décision ===
+tension_threshold: 0.7       # Seuil de tension pour déclencher l'inhibition
+consensus_weight: 0.3        # Poids du consensus vs individualité (0=individualiste, 1=grégaire)
+doubt_threshold: 0.6         # Seuil de doute pour activer la trace de doute
+silence_mode_threshold: 0.85 # Seuil de tension pour activer le mode silence complet
+
+# === Mémoire et apprentissage ===
+doubt_trace_memory: 100      # Nombre d'états de doute à conserver
+intention_history: 50        # Taille de l'historique des intentions
+learning_rate: 1e-4          # Taux d'apprentissage du moteur local
+weight_decay: 0.01           # Régularisation L2
+update_frequency: 10         # Fréquence de mise à jour du tenseur latent (en steps)
+
+# === Pondération des modules ===
+module_weights:              # Poids des différents modules dans les décisions
+  transformer: 0.3           # Poids du module Transformer (SFT)
+  curiosity: 0.2             # Poids des modules de curiosité (ICM/RND)
+  planning: 0.2              # Poids des modules de planification (MCTS/ToT)
+  memory: 0.3                # Poids des modules de mémoire (Continual Learning)
+
+# === Modes de fonctionnement ===
+modes:
+  exploration_alternative:   # Mode d'exploration alternative
+    enabled: true
+    max_attempts: 3          # Nombre max de tentatives d'approches alternatives
+    cooldown: 5              # Temps de refroidissement entre tentatives
+  
+  silence_reasoned:          # Mode silence raisonné
+    enabled: true
+    max_duration: 20         # Durée maximale du silence (en steps)
+    escalation_threshold: 0.9 # Seuil pour escalader vers réflexion approfondie
+  
+  deep_reflection:           # Mode réflexion approfondie
+    enabled: true
+    parallel_modules: true   # Activer plusieurs modules en parallèle
+    consensus_required: 0.8  # Consensus requis pour sortir du mode
+
+# === Entraînement ===
+training:
+  batch_size: 64             # Batch plus large avec 24GB VRAM
+  max_epochs: 15             # Plus d'epochs avec CPU puissant
+  validation_split: 0.2      # Proportion pour validation
+  early_stopping_patience: 5 # Plus de patience avec resources
+  gradient_clip: 1.0         # Clipping du gradient
+  gradient_checkpointing: false # Désactivé avec 24GB VRAM
+  num_workers: 12            # Plus de workers avec Ryzen 9 7900
+  
+  # Curriculum learning
+  curriculum:
+    start_simple: true       # Commencer par des cas simples
+    complexity_ramp: 0.05    # Progression plus fine avec plus de ressources
+    
+# === Intégration système ===
+integration:
+  metacontroller_interface: true    # Interface avec le méta-contrôleur
+  blackboard_logging: true          # Log vers le blackboard partagé
+  realtime_metrics: true            # Métriques temps réel
+  
+  # Checkpoints requis d'autres modules
+  dependencies:
+    sft_checkpoint: "models/sft_finetuned/latest.pt"
+    base_model: "deepseekr1-qwen-12b"       # Modèle de base DeepSeek R1 Qwen 12B
+    
+# === Métriques et monitoring ===
+monitoring:
+  tension_tracking: true     # Suivi des tensions internes
+  intention_drift: true      # Détection de dérive intentionnelle
+  consensus_evolution: true  # Évolution du consensus
+  performance_impact: true   # Impact sur les performances globales
+  
+  # Fréquence de sauvegarde
+  save_frequency: 100        # Sauvegarde tous les N steps
+  
+# === Debug et développement ===
+debug:
+  verbose_logging: false     # Logs détaillés (pour debug uniquement)
+  intention_visualization: false  # Visualisation des intentions
+  tension_heatmaps: false    # Cartes de chaleur des tensions
+  
+# === Paramètres expérimentaux ===
+experimental:
+  adaptive_thresholds: false # Seuils adaptatifs (expérimental)
+  multi_intention: false     # Intentions multiples simultanées
+  external_validation: false # Validation par modules externes
+  
+# Seed pour reproductibilité
+seed: 42 
