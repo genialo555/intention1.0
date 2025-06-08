@@ -1,0 +1,27 @@
+tasks:
+  - source: notebooks/sprint1_meta_limen.ipynb
+    product:
+      nb: output/sprint1_meta_limen.ipynb
+    static_analysis: disable
+
+  - source: notebooks/domain_mapping_.ipynb
+    product:
+      nb: output/domain_mapping_.ipynb
+    static_analysis: disable
+
+  - source: notebooks/Carnet_de_Curiosite_ml.ipynb
+    product:
+      nb: output/Carnet_de_Curiosite_ml.ipynb
+    static_analysis: disable
+
+  - source: notebooks/Carnet_de_Curiosite_simple.ipynb
+    product:
+      nb: output/Carnet_de_Curiosite_simple.ipynb
+    static_analysis: disable
+
+  - source: notebooks/intention_decision_curiosity_math.ipynb
+    product:
+      nb: output/intention_decision_curiosity_math.ipynb
+    static_analysis: disable
+
+# To execute: install system deps, then run `ploomber build` 

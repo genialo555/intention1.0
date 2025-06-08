@@ -92,25 +92,30 @@ simple_embedder: "word2vec"     # Type embeddings simples
 
 # === Domaines cibles ===
 target_domains:
-  - name: "physics"
-    description: "mathematical physics concepts reasoning"
-    priority: 0.8
-    curriculum_weight: 0.3
-  
-  - name: "biology" 
-    description: "biological systems understanding"
+  - name: "quantum_computing"
+    description: "design and analysis of algorithms on quantum machines"
+    priority: 0.85
+    curriculum_weight: 0.25
+  - name: "synthetic_biology"
+    description: "engineering biological systems for novel functions"
+    priority: 0.75
+    curriculum_weight: 0.15
+  - name: "behavioral_economics"
+    description: "psychological influences on economic decision-making"
     priority: 0.7
+    curriculum_weight: 0.15
+  - name: "cognitive_neuroscience"
+    description: "neural mechanisms underlying cognition and behavior"
+    priority: 0.8
     curriculum_weight: 0.2
-    
-  - name: "economics"
-    description: "economic modeling decision making"
+  - name: "climate_modeling"
+    description: "simulation and prediction of Earth's climate systems"
+    priority: 0.65
+    curriculum_weight: 0.1
+  - name: "complex_adaptive_systems"
+    description: "dynamics of systems with multiple interacting agents"
     priority: 0.6
-    curriculum_weight: 0.2
-    
-  - name: "psychology"
-    description: "cognitive processes human behavior"
-    priority: 0.5
-    curriculum_weight: 0.3
+    curriculum_weight: 0.15
 
 # === Curriculum génération ===
 curriculum_generation:

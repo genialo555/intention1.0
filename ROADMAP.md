@@ -615,14 +615,16 @@ class PhylogeneticGroupThink:
 - [ ] **US-16.1** : En tant que nouveau développeur, je veux comprendre rapidement le système
 - [ ] **US-16.2** : En tant qu'utilisateur, je veux des tutorials détaillés
 - [ ] **US-16.3** : En tant que chercheur, je veux la documentation scientifique
+- [ ] **US-16.4** : En tant que chercheur, je veux un cycle cognitif en 3 phases documenté (docs/architecture/cognitive_cycle.md)
 
 #### 🎯 Tâches techniques
 ```
 ├── Documentation technique
-│   ├── Architecture documentation
+│   ├── Architecture documentation (inclut cognitive_cycle.md, group_think_integration.md)
 │   ├── API documentation complète
 │   ├── Modules documentation (déjà fait en partie)
 │   └── Troubleshooting guides
+├── Création du doc cognitive_cycle.md dans docs/architecture/
 ├── Tutorials & Examples
 │   ├── Getting started guide
 │   ├── Advanced usage tutorials
@@ -726,7 +728,62 @@ class PhylogeneticGroupThink:
 
 ---
 
-## 📊 Métriques de Succès Globales
+## 🚧 Roadmap v2.0 – Post-Release Expansion (Sprints 19–26)
+
+### Phase 5 : Ecosystème & Extensibilité (Sprints 19–22)
+**Objectif** : Ouvrir le système à la communauté via Plugins, SDK et marketplace
+
+#### 📋 User Stories
+- [ ] **US-19.1** : En tant que développeur, je veux un SDK plugin pour étendre MetaLIMEN
+- [ ] **US-19.2** : En tant qu'utilisateur avancé, je veux installer des extensions via un marketplace
+- [ ] **US-19.3** : En tant que mainteneur, je veux un registre centralisé de plugins validés
+
+#### 🎯 Tâches techniques
+```
+├── Définition Plugin API v1.0
+├── Développement du SDK (Python + JS)
+├── Portail Marketplace (React/Vue)
+├── Système de publication & validation des plugins
+└── Mise en place de tests d'intégration pour plugins externes
+```
++├── modules/group_think/agents/energetic_agent.py - prototype EBM pour scoring de séquences
++├── orchestration/agent_fusion.py - mécanisme de fusion stochastique vs énergétique
++├── Entraînement EBM via Contrastive Divergence / Noise-Contrastive Estimation
++├── Tests de latence & calibration des seuils d'énergie
++└── Adaptation du Controller pour inclure energy_score et fusion des verdicts
+
+#### ✅ Critères d'acceptation
+- [ ] SDK documenté (JSDoc/Sphinx) et exemples disponibles
+- [ ] Publication d'au moins 2 plugins tiers via marketplace
+- [ ] Sécurité : sandboxing des plugins validé
+- [ ] Prototype d'EnergeticAgent fonctionnel (scoring & ranking validés)
+- [ ] Fusion stochastique/énergétique arbitré par le Controller
+- [ ] Amélioration de la cohérence (<10% de diversité perdue)
+- [ ] Latence d'intégration EBM < 1.5s
+
+### Phase 6 : Enterprise & Scaling (Sprints 23–26)
+**Objectif** : Adapter MetaLIMEN pour les déploiements multi-clients et haute disponibilité
+
+#### 📋 User Stories
+- [ ] **US-23.1** : En tant qu'administrateur, je veux du multi-tenant pour isoler mes clients
+- [ ] **US-23.2** : En tant que CTO, je veux des métriques SLA et des logs centralisés
+- [ ] **US-23.3** : En tant que responsable conformité, je veux un audit trail complet des requêtes
+
+#### 🎯 Tâches techniques
+```
+├── Architecture multi-tenant (isolation data & config)
+├── Intégration Prometheus + Grafana
+├── Module d'audit et d'export de logs (ELK stack)
+├── Optimisation scaling horizontal (Kubernetes)
+└── Test de charge et résilience (Chaos Engineering)
+```
+
+#### ✅ Critères d'acceptation
+- [ ] Isolation des données vérifiée par tests end-to-end
+- [ ] Dashboards temps réel exposant RPS, erreurs, latence
+- [ ] Documentation déploiement k8s avec Helm Chart
+
+### 📊 Métriques de Succès Globales
 
 ### Métriques Techniques
 - **Performance** : Latence <1s, throughput >100 req/min

@@ -2,7 +2,7 @@
 import os
 # --- [MODIFIED] Assurer l'ordre PCI_BUS et Forcer CUDA_VISIBLE_DEVICES --- 
 os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = os.environ.get('CUDA_VISIBLE_DEVICES', '0')
 print(f"[INFO] Explicitly set os.environ['CUDA_DEVICE_ORDER'] = {os.environ.get('CUDA_DEVICE_ORDER')}")
 print(f"[INFO] Explicitly set os.environ['CUDA_VISIBLE_DEVICES'] = {os.environ.get('CUDA_VISIBLE_DEVICES')}")
 # --- Fin Modifications --- 
@@ -22,6 +22,10 @@ import random
 import numpy as np
 import torch
 
+# Provide fallback for get_default_device in older torch versions
+if not hasattr(torch, 'get_default_device'):
+    torch.get_default_device = lambda : ('cuda' if torch.cuda.is_available() else 'cpu')
+
 # --- [MODIFIED] Code de débogage pour vérifier la visibilité CUDA (niveau supérieur) ---
 print("[INFO][TOP_LEVEL_DEBUG] Checking CUDA availability immediately after torch import.")
 if torch.cuda.is_available():
@@ -37,10 +41,11 @@ else:
 # --- Fin code de débogage (niveau supérieur) ---
 
 from datasets import Dataset 
-from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments, DataCollatorForLanguageModeling
+from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, DataCollatorForLanguageModeling, Trainer
 from transformers import BitsAndBytesConfig 
 from orchestration.controller import Blackboard
 from datasets import load_dataset
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 
 # --- [MODIFIED] Importer PEFT ---
 try:
@@ -52,19 +57,66 @@ except ImportError:
     print("[WARN] PEFT library not found. LoRA training will be disabled.")
 # --- Fin Import PEFT ---
 
+# -----------------------------------------------------------------------------
+# Workaround: `accelerate` creates a CUDA-based torch.Generator when the default
+# device is CUDA, which triggers the runtime error "Expected a 'cpu' device type
+# for generator but found 'cuda'" inside `torch.utils.data.RandomSampler`.  We
+# patch the default Trainer with a subclass that builds the train DataLoader
+# using a CPU generator so that `torch.randperm` works correctly.
+# -----------------------------------------------------------------------------
+
+class CpuGeneratorTrainer(Trainer):
+    """A Trainer that ensures DataLoader's RNG lives on CPU to avoid PyTorch
+    sampler errors when the main device is CUDA.
+    """
+
+    def get_train_dataloader(self):
+        if self.train_dataset is None:
+            raise ValueError("Trainer: training requires a train_dataset.")
+
+        # If we've already built it once, reuse it.
+        if getattr(self, "_train_dataloader", None) is not None:
+            return self._train_dataloader
+
+        # Use a CPU generator for sampling to avoid the CUDA‐generator issue.
+        cpu_generator = torch.Generator(device="cpu")
+
+        # Decide on the sampler: shuffle unless explicitly disabled.
+        shuffle = True
+        if hasattr(self.args, "dataloader_shuffle"):
+            shuffle = bool(self.args.dataloader_shuffle)
+
+        if shuffle:
+            sampler = RandomSampler(self.train_dataset, generator=cpu_generator)
+        else:
+            sampler = SequentialSampler(self.train_dataset)
+
+        self._train_dataloader = DataLoader(
+            self.train_dataset,
+            batch_size=self.args.per_device_train_batch_size,
+            sampler=sampler,
+            collate_fn=self.data_collator,
+            drop_last=self.args.dataloader_drop_last,
+            num_workers=self.args.dataloader_num_workers,
+            pin_memory=self.args.dataloader_pin_memory,
+        )
+        return self._train_dataloader
 
 def main():
     parser = argparse.ArgumentParser(description="Train the SFT baseline model.")
     parser.add_argument('--config', type=str, required=True, help='Path to SFT config YAML')
     parser.add_argument('--output', type=str, required=True, help='Output directory for model and metrics')
+    parser.add_argument('--model_name_or_path', type=str, default=None, help='HuggingFace model identifier or local path (defaults to config pretrained_embeddings or gpt2)')
     args = parser.parse_args()
 
     with open(args.config, 'r') as f:
         config = yaml.safe_load(f)
     
+    # Determine which model to fine-tune: CLI override > config pretrained_embeddings > default gpt2
+    model_name = args.model_name_or_path or config.get('pretrained_embeddings') or config.get('model_name', 'gpt2')
+    
     data_pattern = str(config.get('data_pattern', 'data/sft_examples/*.jsonl'))
     field = str(config.get('field', 'text'))
-    model_name = str(config.get('model_name', 'gpt2'))
     batch_size = int(config.get('batch_size', 8))
     gradient_accumulation_steps = int(config.get('gradient_accumulation_steps', 1))
     epochs = int(config.get('epochs', 1))
@@ -113,6 +165,12 @@ def main():
     load_4bit = bool(config.get('load_in_4bit', False))
     load_8bit = bool(config.get('load_in_8bit', True))
     
+    # Disable quantization on CPU-only environments to avoid bitsandbytes backend errors
+    if not torch.cuda.is_available():
+        print("[WARN] No CUDA detected, disabling 4/8-bit quantization on CPU.")
+        load_4bit = False
+        load_8bit = False
+
     if (load_4bit or load_8bit) and peft_enable:
         actual_fp16_trainer = False 
         print("[INFO] Quantization (4/8bit) and PEFT enabled, Trainer fp16 will be False.")
@@ -137,26 +195,42 @@ def main():
 
 
     quantization_config_bnb = None
-    if load_4bit:
-        compute_dtype_str = config.get("bnb_4bit_compute_dtype", "float16")
-        compute_dtype = getattr(torch, compute_dtype_str, torch.float16)
-        quantization_config_bnb = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type=config.get("bnb_4bit_quant_type", "nf4"),
-            bnb_4bit_compute_dtype=compute_dtype,
-            bnb_4bit_use_double_quant=config.get("bnb_4bit_use_double_quant", False)
-        )
-        print(f"Loading model '{model_name}' with 4-bit quantization (compute_dtype: {compute_dtype_str})...")
-    elif load_8bit:
-        quantization_config_bnb = BitsAndBytesConfig(load_in_8bit=True)
-        print(f"Loading model '{model_name}' with 8-bit quantization...")
+    # Only apply bitsandbytes quantization when adapters (PEFT) are enabled; else load full precision
+    if peft_enable:
+        if load_4bit:
+            compute_dtype_str = config.get("bnb_4bit_compute_dtype", "float16")
+            compute_dtype = getattr(torch, compute_dtype_str, torch.float16)
+            quantization_config_bnb = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type=config.get("bnb_4bit_quant_type", "nf4"),
+                bnb_4bit_compute_dtype=compute_dtype,
+                bnb_4bit_use_double_quant=config.get("bnb_4bit_use_double_quant", False)
+            )
+            print(f"Loading model '{model_name}' with 4-bit quantization (compute_dtype: {compute_dtype_str})...")
+        elif load_8bit:
+            quantization_config_bnb = BitsAndBytesConfig(load_in_8bit=True)
+            print(f"Loading model '{model_name}' with 8-bit quantization...")
+        else:
+            print(f"Loading model '{model_name}' in full precision (quantization disabled for non-adapter training)...")
     else:
+        if load_4bit or load_8bit:
+            print("[WARN] Quantization flags detected but PEFT adapters not enabled; loading full precision model.")
         print(f"Loading model '{model_name}' in full precision...")
 
+    # Prepare kwargs for from_pretrained
+    load_kwargs = dict(
+        quantization_config=quantization_config_bnb,
+        trust_remote_code=True,
+    )
+    # If no quantization and GPU available, load in half precision and auto device map
+    if quantization_config_bnb is None and torch.cuda.is_available():
+        # Use half-precision to save GPU memory
+        load_kwargs['torch_dtype'] = torch.float16 if fp16_config else torch.float32
+        # Automatically map model layers to available devices
+        load_kwargs['device_map'] = 'auto'
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        quantization_config=quantization_config_bnb, 
-        trust_remote_code=True,
+        **load_kwargs
     )
     
     if quantization_config_bnb: print(f"Model loaded with {'4-bit' if load_4bit else '8-bit'} quantization.")
@@ -207,8 +281,7 @@ def main():
         logging_steps=logging_steps,
         eval_strategy=evaluation_strategy if eval_dataset is not None else "no",
         eval_steps=eval_steps or logging_steps,
-        save_strategy="steps",
-        save_steps=save_steps or logging_steps,
+        save_strategy="no",
         warmup_steps=warmup_steps,
         weight_decay=weight_decay,
         fp16=actual_fp16_trainer,
@@ -217,7 +290,7 @@ def main():
         report_to=None,
     )
 
-    trainer = Trainer(
+    trainer = CpuGeneratorTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
@@ -237,11 +310,18 @@ def main():
         model.save_pretrained(args.output)
         tokenizer.save_pretrained(args.output)
 
-    else: 
+    else:
         print("[INFO] Saving full model...")
-        trainer.save_model(args.output)
+        try:
+            trainer.save_model(args.output)
+        except Exception as e:
+            print(f"[WARN] trainer.save_model failed ({e}), falling back to torch.save state_dict.")
+            os.makedirs(args.output, exist_ok=True)
+            torch.save(model.state_dict(), os.path.join(args.output, 'pytorch_model.bin'))
+            tokenizer.save_pretrained(args.output)
         
-    with open(os.path.join(args.output, 'metrics.json'), 'w') as mf: json.dump(metrics, mf, indent=4)
+    with open(os.path.join(args.output, 'metrics.json'), 'w') as mf:
+        json.dump(metrics, mf, indent=4)
 
     Blackboard().write('model_sft', args.output)
     print(f"Model (or adapters) saved to {args.output}")

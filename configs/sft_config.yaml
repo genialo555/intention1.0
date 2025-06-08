@@ -1,13 +1,14 @@
 # Supervised Fine-Tuning Configuration
 # Configuration optimisée pour DeepSeek R1 Qwen 12B
+# Configuration optimisée pour DeepSeek R1 Qwen 7B
 
 # === Données ===
 data_pattern: data/sft_examples/*.jsonl
 field: text                        # Champ contenant le texte dans les fichiers JSONL
 
 # === Modèle ===
-model_name: deepseekr1-qwen-12b    # DeepSeek R1 Qwen 12B
-max_length: 512                    # Longueur maximale des séquences
+model_name: deepseekr1-qwen-7b    # DeepSeek R1 Qwen 7B
+max_length: 256                    # Réduit pour baisser la conso VRAM
 vocab_size: null                   # Auto-détecté depuis le modèle
 trust_remote_code: true            # Nécessaire pour DeepSeek
 
@@ -21,10 +22,10 @@ warmup_steps: 200                  # Étapes de warmup
 
 # === Optimisation mémoire ===
 fp16: true                         # Half-precision sur GPU
-gradient_checkpointing: false      # Désactivé avec 24GB VRAM
+gradient_checkpointing: true       # Activé pour réduire VRAM
 dataloader_pin_memory: true        # Pin memory pour efficacité GPU
 dataloader_num_workers: 8          # Plus de workers avec Ryzen 9 7900
-load_in_8bit: false                # Quantification 8-bit (désactivé par défaut)
+load_in_8bit: true                 # Active quantification 8-bit
 
 # === PEFT LoRA Configuration ===
 peft_enable: false                 # Full fine-tuning possible avec RTX 3090
@@ -73,5 +74,5 @@ overwrite_output_dir: true         # Écraser le répertoire existant
 report_to: ["tensorboard"]         # Reporting (tensorboard, wandb, etc.)
 
 # === GPU-spécifique RTX 3090 ===
-per_device_train_batch_size: 8     # Batch size par device (optimisé 24GB)
-per_device_eval_batch_size: 12     # Batch size éval par device (plus large) 
+per_device_train_batch_size: 1     # Batch size minimal GPU 24GB
+per_device_eval_batch_size: 4      # Batch size éval réduit 

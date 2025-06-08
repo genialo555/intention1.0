@@ -4,48 +4,41 @@
 # === Architecture simple ===
 embedding_dim: 64                # Dimension embeddings simples (Word2Vec)
 meta_space_dim: 64              # Dimension espace méta-intentionnel
-simple_embedder: "word2vec"     # Type embeddings simples (word2vec, glove)
-pretrained_embeddings: "glove.6B.100d"  # Embeddings pré-entraînés
+simple_embedder: "deepseek"     # Type embeddings simples (word2vec, glove, deepseek)
+pretrained_embeddings: "models/base/qwen2.5-math-7b"  # Chemin vers le modèle local Qwen2.5 math
 
 # === Domaines d'intentions cibles ===
 target_domains:
-  physics:
-    description: "mathematical physics concepts reasoning equations formulas"
-    priority: 0.8
-    curriculum_weight: 0.3
-    keywords: ["physics", "mathematics", "equation", "formula", "mechanics", "quantum"]
-    complexity_level: "intermediate"
-    reasoning_type: "quantitative"
-  
-  biology:
-    description: "biological systems understanding organism cell evolution"
+  - name: "quantum_computing"
+    description: "design and analysis of algorithms on quantum machines"
+    priority: 0.85
+    curriculum_weight: 0.25
+  - name: "synthetic_biology"
+    description: "engineering biological systems for novel functions"
+    priority: 0.75
+    curriculum_weight: 0.15
+  - name: "behavioral_economics"
+    description: "psychological influences on economic decision-making"
     priority: 0.7
+    curriculum_weight: 0.15
+  - name: "cognitive_neuroscience"
+    description: "neural mechanisms underlying cognition and behavior"
+    priority: 0.8
     curriculum_weight: 0.2
-    keywords: ["biology", "organism", "cell", "evolution", "genetics", "ecology"]
-    complexity_level: "intermediate"
-    reasoning_type: "systemic"
-    
-  economics:
-    description: "economic modeling decision making market behavior"
+  - name: "climate_modeling"
+    description: "simulation and prediction of Earth's climate systems"
+    priority: 0.65
+    curriculum_weight: 0.1
+  - name: "complex_adaptive_systems"
+    description: "dynamics of systems with multiple interacting agents"
     priority: 0.6
-    curriculum_weight: 0.2
-    keywords: ["economics", "market", "decision", "behavior", "modeling", "finance"]
-    complexity_level: "advanced"
-    reasoning_type: "analytical"
-    
-  psychology:
-    description: "cognitive processes human behavior mental mechanisms"
-    priority: 0.5
-    curriculum_weight: 0.3
-    keywords: ["psychology", "cognitive", "behavior", "mental", "learning", "memory"]
-    complexity_level: "intermediate"
-    reasoning_type: "behavioral"
+    curriculum_weight: 0.15
 
 # === Espace méta-intentionnel ===
 meta_intention_space:
   initialization: "random_normal"
   similarity_threshold: 0.3      # Seuil similarité entre domaines
-  separation_penalty: 0.1        # Pénalité rapprochement domaines différents
+  separation_penalty: 0.2        # Pénalité rapprochement domaines différents
   coherence_reward: 0.2          # Récompense cohérence interne domaine
 
 # === Curriculum génération ===
